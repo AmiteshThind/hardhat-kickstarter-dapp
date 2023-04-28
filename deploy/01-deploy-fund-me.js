@@ -1,4 +1,5 @@
 const { networkConfig, developmentChain } = require("../helper-hardhat-config");
+const { verify } = require("../utils/verify");
 
 // function deployFunc() {}
 
@@ -7,7 +8,7 @@ const { networkConfig, developmentChain } = require("../helper-hardhat-config");
 
 // module.exports = async (hre) => {
 //     const { getNamedAccounts, deployments } = hre;
-// };
+// };hre is global variable
 // hre is hardhat run timenviroment object that gives all detaisl about the hre such as blockc number,transctions,accounts, deployments, networks etc
 module.exports = async ({ getNamedAccounts, deployments, network }) => {
     const { deploy, log } = deployments;
@@ -21,14 +22,15 @@ module.exports = async ({ getNamedAccounts, deployments, network }) => {
         const ethUsdAggregator = await deployments.get("MockV3Aggregator");
         ethUsdPriceFeedAddress = ethUsdAggregator.address;
     } else {
-        ethUsdPriceFeedAddress = networkConfig.chainId.ethUsdPriceFeed;
+        ethUsdPriceFeedAddress = networkConfig[chainId]["ethUsdPriceFeed"];
     }
     //if the contract doesnt exist we deply a minimal version of it for local testing
-
+    const args = [ethUsdPriceFeedAddress];
     const fundMe = await deploy("FundMe", {
         from: deployer, //who deploying
-        args: [ethUsdPriceFeedAddress], //constructor arguments
+        args: args, //constructor arguments
         log: true,
+        waitConfirmations: network.config.blockConfirmations || 1,
     });
 
     //verfiy deployed contract
@@ -38,6 +40,7 @@ module.exports = async ({ getNamedAccounts, deployments, network }) => {
         process.env.ETHERSCAN_API_KEY
     ) {
         //verify
+        await verify(fundMe.address, args);
     }
 
     log("-----------------------------------------------------");

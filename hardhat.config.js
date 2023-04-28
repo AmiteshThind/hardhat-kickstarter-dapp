@@ -17,6 +17,7 @@ module.exports = {
             accounts: [PRIVATE_KEY],
             chainId: 11155111,
             gasPrice: 3500000,
+            blockConfirmations: 6,
         },
         localhost: {
             url: "http://127.0.0.1:8545/",
@@ -29,7 +30,7 @@ module.exports = {
         apiKey: ETHERSCAN_API_KEY,
     },
     gasReporter: {
-        enabled: true,
+        enabled: false,
         outputFile: "gas-report.txt",
         noColors: true,
         currency: "USD",

@@ -1,3 +1,5 @@
+const { run } = require("hardhat");
+
 async function verify(contractAddress, args) {
     console.log("Verifying Contract ...");
     try {
@@ -13,3 +15,5 @@ async function verify(contractAddress, args) {
         }
     }
 }
+
+module.exports = { verify };
