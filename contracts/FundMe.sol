@@ -12,28 +12,28 @@ contract FundMe {
     mapping(address => uint256) public addressToAmountFunded;
     address[] public funders;
 
-
-    address public /* immutable */ i_owner;
+    address public immutable i_owner;
     uint256 public constant MINIMUM_USD = 50 * 10 ** 18;
-    AggregatorV3Interface priceFeed;
+    AggregatorV3Interface public priceFeed;
+
     constructor(address priceFeedAddress) {
         i_owner = msg.sender;
         priceFeed = AggregatorV3Interface(priceFeedAddress);
     }
 
-    modifier onlyOwner {
+    modifier onlyOwner() {
         // require(msg.sender == owner);
         if (msg.sender != i_owner) revert NotOwner();
         _;
     }
 
-        // Ether is sent to contract
+    // Ether is sent to contract
     //      is msg.data empty?
-    //          /   \ 
+    //          /   \
     //         yes  no
     //         /     \
-    //    receive()?  fallback() 
-    //     /   \ 
+    //    receive()?  fallback()
+    //     /   \
     //   yes   no
     //  /        \
     //receive()  fallback()
@@ -47,22 +47,27 @@ contract FundMe {
     }
 
     function fund() public payable {
-        require(msg.value.getConversionRate(priceFeed) >= MINIMUM_USD, "You need to spend more ETH!");
+        require(
+            msg.value.getConversionRate(priceFeed) >= MINIMUM_USD,
+            "You need to spend more ETH!"
+        );
         // require(PriceConverter.getConversionRate(msg.value) >= MINIMUM_USD, "You need to spend more ETH!");
         addressToAmountFunded[msg.sender] += msg.value;
         funders.push(msg.sender);
     }
-    
-    function getVersion() public view returns (uint256){
+
+    function getVersion() public view returns (uint256) {
         // ETH/USD price feed address of Sepolia Network.
-        
+
         return priceFeed.version();
     }
-    
- 
-    
+
     function withdraw() public onlyOwner {
-        for (uint256 funderIndex=0; funderIndex < funders.length; funderIndex++){
+        for (
+            uint256 funderIndex = 0;
+            funderIndex < funders.length;
+            funderIndex++
+        ) {
             address funder = funders[funderIndex];
             addressToAmountFunded[funder] = 0;
         }
@@ -73,10 +78,9 @@ contract FundMe {
         // bool sendSuccess = payable(msg.sender).send(address(this).balance);
         // require(sendSuccess, "Send failed");
         // call
-        (bool callSuccess, ) = payable(msg.sender).call{value: address(this).balance}("");
+        (bool callSuccess, ) = payable(msg.sender).call{
+            value: address(this).balance
+        }("");
         require(callSuccess, "Call failed");
     }
- 
-
 }
-
