@@ -3,8 +3,13 @@ import { abi, contractAddress } from "./constants.js";
 
 const connectButton = document.getElementById("connectButton");
 const fundButton = document.getElementById("fundButton");
+const balanceButton = document.getElementById("balanceButton");
+const withdrawButton = document.getElementById("withdrawButton");
+
 connectButton.onclick = connect;
 fundButton.onclick = fund;
+balanceButton.onclick = getBalance;
+withdrawButton.onclick = withdraw;
 
 async function connect() {
   if (typeof window.ethereum !== "undefined") {
@@ -19,7 +24,7 @@ async function connect() {
 
 async function fund() {
   console.log("fund");
-  const ethAmount = "2";
+  const ethAmount = document.getElementById("ethAmount").value;
   if (typeof window.ethereum !== "undefined") {
     //to send transaction what we need is:
     //provider(blockchain node we can connect to)/connection to the blockchain
@@ -44,14 +49,41 @@ async function fund() {
   }
 }
 
-async function listenForTransactionMine(transactionResponse, provider) {
+function listenForTransactionMine(transactionResponse, provider) {
   console.log(`${transactionResponse.hash}...`);
   //listem for transaction to finish
-  await provider.once(transactionResponse.hash, (transactionReceipt) => {
-    console.log(
-      `Completed with ${transactionReceipt.confirmations} block confirmations`
-    );
+  return new Promise((resolve, reject) => {
+    provider.once(transactionResponse.hash, (transactionReceipt) => {
+      console.log(
+        `Completed with ${transactionReceipt.confirmations} block confirmations`
+      );
+      resolve();
+    });
   });
+  //lsiteners are put into the event loop and then rest is executed, if u want to wait then need a promise so await knows it needs to wait for promise to resolve or reject before moving on
 
   //create a listner for the blockchain
+}
+
+async function getBalance() {
+  if (typeof window.ethereum !== "undefined") {
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const balance = await provider.getBalance(contractAddress);
+    console.log(ethers.utils.formatEther(balance));
+  }
+}
+
+async function withdraw() {
+  if (typeof window.ethereum !== "undefined") {
+    console.log("Withdrawing");
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const signer = provider.getSigner(); //whatever metamask account is conencted
+    const contract = new ethers.Contract(contractAddress, abi, signer);
+    try {
+      const TransactionResponse = await contract.withdraw();
+      await listenForTransactionMine(TransactionResponse, provider);
+    } catch (error) {
+      console.log(error);
+    }
+  }
 }
